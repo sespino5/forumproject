@@ -20,6 +20,7 @@ async function getUser(email: string): Promise<User | undefined> {
  
 export const { auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  // use zod to validate the email and password before checking if the user exists in the database
   providers: [
     Credentials({
       async authorize(credentials) {
@@ -36,7 +37,6 @@ export const { auth, signIn, signOut } = NextAuth({
             if (passwordsMatch) return user;
           }
           console.log('Invalid credentials');
-        return null;
         return null;
       },
     }),
