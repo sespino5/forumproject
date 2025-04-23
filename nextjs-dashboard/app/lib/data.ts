@@ -1,6 +1,7 @@
 import postgres from 'postgres';
 import {
   CustomerField,
+  FormattedCustomersTable,
   CustomersTableType,
   InvoiceForm,
   InvoicesTable,
@@ -179,6 +180,30 @@ export async function fetchCustomers() {
     `;
 
     return customers;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch all customers.');
+  }
+}
+
+export async function fetchCustomersAll() {
+  try {
+    const customers = await sql<FormattedCustomersTable[]>`
+      SELECT
+        customers.id,
+        customers.name,
+        customers.email,
+        customers.image_url,
+        COUNT(invoices.id) AS total_invoices, -- Calculate total invoices
+        SUM(CASE WHEN invoices.status = 'pending' THEN invoices.amount ELSE 0 END) AS total_pending, -- Calculate total pending
+        SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid -- Calculate total paid
+      FROM customers
+      LEFT JOIN invoices ON customers.id = invoices.customer_id -- Join with invoices table
+      GROUP BY customers.id, customers.name, customers.email, customers.image_url -- Group by customer fields
+      ORDER BY customers.name ASC
+    `;
+
+    return customers
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch all customers.');
