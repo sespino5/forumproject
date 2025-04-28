@@ -16,11 +16,7 @@ import Link from "next/link";
 export default function RegisterForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  // const [errorMessage, formAction, isPending] = useActionState(
-  //   authenticate,
-  //   undefined
-  // );
-  const [state, formAction] = useActionState(
+  const [errorMessage, formAction, isPending] = useActionState(
     createUser,
     undefined // Initial state
   );
@@ -93,7 +89,7 @@ export default function RegisterForm() {
           </div>
         </div>
         <input type="hidden" name="redirectTo" value={callbackUrl} />
-        <Button className="mt-4 w-full">
+        <Button className="mt-4 w-full" aria-disabled={isPending}>
           Register <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
 
@@ -106,12 +102,12 @@ export default function RegisterForm() {
           aria-live="polite"
           aria-atomic="true"
         >
-          {/* {errorMessage && (
+          {errorMessage && (
             <>
               <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
               <p className="text-sm text-red-500">{errorMessage}</p>
             </>
-          )} */}
+          )}
         </div>
       </div>
     </form>

@@ -61,13 +61,14 @@ export async function createUser(prevState: string | undefined, formData: FormDa
       password: formData.get('password'),
     });
 
-    // If form validation fails, return errors early. Otherwise, continue.
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create User.',
-    };
-  }
+    // If form validation fails, return errors early as strings. Otherwise, continue.
+    if (!validatedFields.success) {
+      const errorMessages = Object.entries(validatedFields.error.flatten().fieldErrors)
+        .map(([field, messages]) => `${field}: ${messages?.join(", ")}`)
+        .join("; ");
+    
+      return `Missing Fields. Failed to Create User. Details: ${errorMessages}`;
+    }
 
   // Prepare data for insertion into the database
   const { name, email, password } = validatedFields.data;
@@ -77,15 +78,12 @@ export async function createUser(prevState: string | undefined, formData: FormDa
   try {
       const existingUser = await getUser(email);
       if (existingUser){
-        return {
-          message: 'Database Error: Failed to Create User. Email already exists',
-        };
+        return 'Database Error: Failed to Create User. Email already exists';
       }
   } catch {
     // in case no user found, proceed with creation
   }
   
-
   // Insert data into the database
   // uid is auto generated
   try {
@@ -95,9 +93,7 @@ export async function createUser(prevState: string | undefined, formData: FormDa
     `;
   } catch  {
     // If a database error occurs, return a more specific error.
-    return {
-      message: 'Database Error: Failed to Create User.',
-    };
+    return 'Database Error: Failed to Create User.';
   }
 
   await signIn('credentials', {"email": email, "password": password});
