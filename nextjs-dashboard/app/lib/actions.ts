@@ -7,8 +7,9 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import postgres from 'postgres';
 import { redirect } from 'next/navigation';
-import { signIn } from '@/auth';
+import { signIn, getUser } from '@/auth';
 import { AuthError } from 'next-auth'; 
+import bcrypt from 'bcrypt';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -26,6 +27,17 @@ const FormSchema = z.object({
   date: z.string(),
 });
 
+
+const UserFormSchema = z.object({
+  id: z.string(),
+  name: z.string({
+    invalid_type_error: 'Please enter a valid  name at least x characters long',
+  }),
+  email: z.string().email({ message: 'Please enter a valid email' }),
+  password: z.string().min(6, { message: 'Please enter a valid password at least 6 characters long',
+  })
+});
+
 export type State = {
     errors?: {
       customerId?: string[];
@@ -38,9 +50,62 @@ export type State = {
 
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
- 
+const CreateUser = UserFormSchema.omit({id: true})
 
-export async function createInvoice(prevState: State, formData: FormData) {
+
+export async function createUser(prevState: string | undefined, formData: FormData) {
+  // safeParse() will return an object containing either a success or error field
+    const validatedFields = CreateUser.safeParse({
+      name: formData.get('name'),
+      email: formData.get('email'),
+      password: formData.get('password'),
+    });
+
+    // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create User.',
+    };
+  }
+
+  // Prepare data for insertion into the database
+  const { name, email, password } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  //check email is unique
+  try {
+      const existingUser = await getUser(email);
+      if (existingUser){
+        return {
+          message: 'Database Error: Failed to Create User. Email already exists',
+        };
+      }
+  } catch {
+    // in case no user found, proceed with creation
+  }
+  
+
+  // Insert data into the database
+  // uid is auto generated
+  try {
+    await sql`
+      INSERT INTO users (name, email, password)
+      VALUES (${name}, ${email}, ${hashedPassword})
+    `;
+  } catch  {
+    // If a database error occurs, return a more specific error.
+    return {
+      message: 'Database Error: Failed to Create User.',
+    };
+  }
+
+  await signIn('credentials', {"email": email, "password": password});
+
+}
+
+
+export async function createInvoice(prevState: State | undefined , formData: FormData) {
   // safeParse() will return an object containing either a success or error field
     const validatedFields = CreateInvoice.safeParse({
       customerId: formData.get('customerId'),
