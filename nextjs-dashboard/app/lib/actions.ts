@@ -10,8 +10,13 @@ import { redirect } from 'next/navigation';
 import { signIn, getUser } from '@/auth';
 import { AuthError } from 'next-auth'; 
 import bcrypt from 'bcrypt';
+import { getServerSession } from '@/auth';
+
+
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+
+
 
 const FormSchema = z.object({
   id: z.string(),
@@ -51,6 +56,17 @@ export type State = {
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 const CreateUser = UserFormSchema.omit({id: true})
+const UpdateUser = UserFormSchema.omit({id: true})
+
+export type User = {
+  errors?: {
+    id?: string[]; 
+    name?: string[];
+    email?: string[];
+    password?: string[];
+  };
+  message?: string | null;
+};
 
 
 export async function createUser(prevState: string | undefined, formData: FormData) {
@@ -96,9 +112,84 @@ export async function createUser(prevState: string | undefined, formData: FormDa
     return 'Database Error: Failed to Create User.';
   }
 
+ 
+
   await signIn('credentials', {"email": email, "password": password});
 
 }
+
+export async function updateUser(
+  id: string,
+  prevState: User | undefined,
+  formData: FormData,
+): Promise<User> {
+  const validatedFields = UpdateUser.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update User.',
+    };
+  }
+
+  const { name, email, password } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const confirmPassword = formData.get("confirm-password") as string;
+
+  if (password !== confirmPassword) {
+    return { message: 'Passwords do not match.' };
+  }
+  try {
+    
+    await sql`
+      UPDATE users
+      SET name = ${name}, email = ${email}, password = ${hashedPassword}
+      WHERE id = ${id}
+    `;
+  } catch {
+    return { message: 'Database Error: Failed to Update User.' };
+  }
+
+  
+  revalidatePath('/dashboard');
+  redirect('/dashboard');
+  
+}
+
+export async function deleteUser(id: string) {  
+  await sql`DELETE FROM users WHERE id = ${id}`;
+  revalidatePath('/dashboard');
+  
+}
+
+
+export async function getUserID(){ 
+  try {
+    const session = await getServerSession();
+    if (!session || !session.user || !session.user.email) {
+      console.warn("No user session found.");
+      return null;
+    }
+
+    const user = await getUser(session.user.email);
+    if (!user || !user.id) {
+      console.warn(`No user found for email: ${session.user.email}`);
+      return null;
+    }
+    return user.id;
+  } catch (error) {
+    console.error("Failed to fetch user ID from session:", error);
+    return null;
+  }
+}
+
+
+
+
 
 
 export async function createInvoice(prevState: State | undefined , formData: FormData) {
@@ -121,13 +212,20 @@ export async function createInvoice(prevState: State | undefined , formData: For
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
+  let userId = await getUserID();
+  if (!userId) {
+    userId = '00000000-0000-0000-0000-000000000000'; // Default value if userId is not found
+  }
  
   // Insert data into the database
   try {
     await sql`
-      INSERT INTO invoices (customer_id, amount, status, date)
-      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+      INSERT INTO invoices (customer_id, amount, status, date, user_id) 
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date}, ${userId})
+
     `;
+
+    
   } catch  {
     // If a database error occurs, return a more specific error.
     return {
@@ -160,6 +258,7 @@ export async function updateInvoice(
  
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
+  
  
   try {
     await sql`
@@ -221,11 +320,15 @@ export async function createCustomer(
   }
 
   const { name, email } = validatedFields.data;
+  let userId = await getUserID();
+  if (!userId) {
+    userId = '00000000-0000-0000-0000-000000000000'; // Default value if userId is not found
+  }
 
   try {
     await sql`
-      INSERT INTO customers (name, email, image_url)
-      VALUES (${name}, ${email}, ${image_url})
+      INSERT INTO customers (name, email, image_url, user_id)
+      VALUES (${name}, ${email}, ${image_url}, ${userId})
     `;
   } catch (err) {
     console.error("Database Error:", err);
@@ -283,23 +386,25 @@ export async function deleteCustomer(id: string) {
   revalidatePath('/dashboard/customers');
 }
 
-
-
 export async function authenticate(
-    prevState: string | undefined,
-    formData: FormData,
-  ) {
-    try {
-      await signIn('credentials', formData);
-    } catch (error) {
-      if (error instanceof AuthError) {
-        switch (error.type) {
-          case 'CredentialsSignin':
-            return 'Invalid credentials.';
-          default:
-            return 'Something went wrong.';
-        }
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
       }
-      throw error;
     }
+    throw error;
   }
+}
+
+
+
+
