@@ -70,7 +70,8 @@ export default function LoginForm() {
         </div>
         <input type="hidden" name="redirectTo" value={callbackUrl} />
         <Button className="mt-4 w-full" aria-disabled={isPending}>
-          Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
+          Log in
+          <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
 
         <Link className="my-4 rounded-md p-4 md:h-40" href="/register">
