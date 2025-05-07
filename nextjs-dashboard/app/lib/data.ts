@@ -137,6 +137,55 @@ export async function fetchFilteredInvoices(
   }
 }
 
+
+export async function getMessages(){
+  const userId = await getUserID();
+
+  try {
+    const data = await sql`SELECT * FROM messages
+    WHERE messages.sender = ${userId}
+    OR messages.receiver = ${userId}
+    `;
+
+    // iterate over messages 
+    // find the sender/receiver that is != userid
+    // add to dictionary where key is the sender/receiver != userid
+    // the value should be a list of the messages
+    // if the key does not exist, make the key and if it exists, add the message to that key's messages
+    // Create a dictionary to group messages
+    const groupedMessages = await data.reduce(async (accPromise, message) => {
+      const acc = await accPromise;
+
+      // Find the sender/receiver that is not the current user
+      const otherUserId =
+        message.sender === userId ? message.receiver : message.sender;
+
+      const otherUser = await sql<User[]>`SELECT * FROM users WHERE id=${otherUserId}`;
+      const otherUserName = otherUser[0].name;
+
+      // If the key does not exist, initialize it with an empty array
+      if (!acc[otherUserId]) {
+        acc[otherUserId] = [];
+      }
+
+      const updatedMessage = {
+        ...message,
+        mesagee: otherUserName,
+      };
+
+      // Add the message to the corresponding group
+      acc[otherUserId].push(updatedMessage);
+
+      return acc;
+    }, Promise.resolve({} as Record<string, typeof data>));
+   
+    return groupedMessages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch messages');
+  }
+}
+
 export async function fetchInvoicesPages(query: string) {
   const userId = await getUserID();
   
