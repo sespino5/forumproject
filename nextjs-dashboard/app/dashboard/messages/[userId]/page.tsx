@@ -1,19 +1,54 @@
-import { getMessages } from "@/app/lib/data";
+"use client";
+
+import { useState } from "react";
 import { lusitana } from "@/app/ui/fonts";
 import Link from "next/link";
 
-export default async function UserMessagesPage({
+export default function UserMessagesPage({
   params,
 }: {
   params: { userId: string };
 }) {
   const { userId } = params;
 
-  // Fetch all messages
-  const messages = await getMessages();
+  // Simulated fetch for messages (replace with actual fetch logic)
+  const [userMessages, setUserMessages] = useState([
+    {
+      msg_id: "1",
+      created_at: new Date().toISOString(),
+      content: "Hello, this is a message!",
+      mesagee: "John Doe",
+    },
+    {
+      msg_id: "2",
+      created_at: new Date().toISOString(),
+      content: "Another message here.",
+      mesagee: "John Doe",
+    },
+  ]);
 
-  // Get messages for the specific userId
-  const userMessages = messages[userId] || [];
+  // Function to handle message deletion
+  const handleDelete = async (msgId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${msgId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Remove the deleted message from the state
+        setUserMessages((prevMessages) =>
+          prevMessages.filter((message) => message.msg_id !== msgId)
+        );
+        alert("Message deleted successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to delete message: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      alert("An error occurred while deleting the message.");
+    }
+  };
 
   return (
     <div className="w-full">
@@ -35,11 +70,21 @@ export default async function UserMessagesPage({
                 </p>
                 <p className="text-lg">{message.content}</p>
               </div>
-              <Link
-                href={`/dashboard/messages/${userId}/edit/${message.msg_id}`}
-              >
-                <button className="text-blue-500 hover:underline">Edit</button>
-              </Link>
+              <div className="flex items-center space-x-4">
+                <Link
+                  href={`/dashboard/messages/${userId}/edit/${message.msg_id}`}
+                >
+                  <button className="text-blue-500 hover:underline">
+                    Edit
+                  </button>
+                </Link>
+                <button
+                  onClick={() => handleDelete(message.msg_id)}
+                  className="text-red-500 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))
         ) : (
