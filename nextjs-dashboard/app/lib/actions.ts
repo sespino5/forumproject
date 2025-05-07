@@ -213,7 +213,7 @@ export async function createInvoice(prevState: State | undefined , formData: For
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
   const userId = await getUserID();
-  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date()) as string;
+  
   
  
   // Insert data into the database
