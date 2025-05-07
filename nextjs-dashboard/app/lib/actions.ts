@@ -213,7 +213,8 @@ export async function createInvoice(prevState: State | undefined , formData: For
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
   const userId = await getUserID();
-  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date());
+  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date()) as string;
+  
  
   // Insert data into the database
   try {
@@ -223,18 +224,14 @@ export async function createInvoice(prevState: State | undefined , formData: For
 
     `;
 
-    await sql`
-    INSERT INTO revenue (month, revenue, user_id) 
-    VALUES (${month}, ${amountInCents}, ${userId})
-  `;
-
-    
   } catch  {
     // If a database error occurs, return a more specific error.
     return {
       message: 'Database Error: Failed to Create Invoice.',
     };
   }
+
+  
 
   // Revalidate the cache for the invoices page and redirect the user.
   revalidatePath('/dashboard/invoices');
@@ -270,11 +267,6 @@ export async function updateInvoice(
       WHERE id = ${id}
     `;
 
-    await sql`
-      UPDATE revenue
-      SET revenue = ${amountInCents}
-      WHERE user_id = ${await getUserID()}
-      `;
   } catch  {
     return { message: 'Database Error: Failed to Update Invoice.' };
   }
@@ -392,6 +384,7 @@ export async function updateCustomer(
 
 export async function deleteCustomer(id: string) {
   await sql`DELETE FROM customers WHERE id = ${id}`;
+  await sql`DELETE FROM invoices WHERE customer_id = ${id}`;
   revalidatePath('/dashboard/customers');
 }
 

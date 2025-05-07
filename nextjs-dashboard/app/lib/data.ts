@@ -24,7 +24,7 @@ export async function fetchRevenue() {
     // await new Promise((resolve) => setTimeout(resolve, 3000));
     const userId = await getUserID();
 
-    const data = await sql<Revenue[]>`SELECT * FROM revenue  WHERE user_id = ${userId}`;
+    const data = await sql<Revenue[]>`SELECT * FROM revenue`;
 
     console.log('Data fetch completed after 3 seconds.');
 
