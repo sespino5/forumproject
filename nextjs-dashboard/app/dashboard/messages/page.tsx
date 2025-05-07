@@ -10,7 +10,6 @@
 // delete message (deletes for both)
 
 import { lusitana } from "@/app/ui/fonts";
-import { InvoicesTableSkeleton } from "@/app/ui/skeletons";
 import { getMessages } from "@/app/lib/data";
 import Link from "next/link";
 import {CreateMessage } from  "@/app/ui/messages/buttons";
@@ -25,9 +24,6 @@ export default async function Page(props: {}) {
         <h1 className={`${lusitana.className} text-2xl`}>Messages</h1>
       </div>
       <div className="mt-4 space-y-4">
-        <div>
-          <CreateMessage />
-        </div>
         {Object.keys(messages).map((userId) => (
           <div
             key={userId}
