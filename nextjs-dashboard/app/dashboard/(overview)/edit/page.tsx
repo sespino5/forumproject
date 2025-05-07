@@ -3,7 +3,7 @@ import Breadcrumbs from "@/app/ui/invoices/breadcrumbs";
 import {fetchUserById} from "@/app/lib/data";
 import { getUserID } from "@/app/lib/actions";
 
-
+export const dynamic = "force-dynamic";
 
 export default async function Page() {
     const id = await getUserID();
