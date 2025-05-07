@@ -388,6 +388,67 @@ export async function deleteCustomer(id: string) {
   revalidatePath('/dashboard/customers');
 }
 
+const MessageSchema = z.object({
+  id: z.string(),
+  sender: z.string({
+    invalid_type_error: 'Please select a sender.',
+  }),
+  receiver: z.string({
+    invalid_type_error: 'Please select a receiver.',
+  }),
+  message: z.string().min(1, { message: 'Please enter a message.' }),
+});
+
+export type MessageState = {
+  errors?: {
+    sender?: string[];
+    receiver?: string[];
+    message?: string[];
+  };
+  message?: string | null;
+};
+
+const CreateMessage = MessageSchema.omit({ id: true });
+
+export async function createMessage(
+  prevState: MessageState | undefined,
+  formData: FormData,
+): Promise<MessageState> {
+  const validatedFields = CreateMessage.safeParse({
+    sender: formData.get('sender'),
+    receiver: formData.get('receiver'),
+    message: formData.get('message'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Message.',
+    };
+  }
+
+  const { sender, receiver, message } = validatedFields.data;
+  const date = new Date().toISOString().split('T')[0];
+
+  try {
+    await sql`
+      INSERT INTO messages (created_at,sender, receiver, content)
+      VALUES (${date},${sender}, ${receiver}, ${message})
+    `;
+  } catch (err) {
+    console.error('Database Error:', err);
+    return {
+      message: 'Database Error: Failed to Create Message.',
+      errors: {},
+    };
+  }
+
+  revalidatePath('/dashboard/messages');
+  redirect('/dashboard/messages');
+  
+}
+
+
 export async function authenticate(
   prevState: string | undefined,
   formData: FormData,

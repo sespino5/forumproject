@@ -100,3 +100,12 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+export type Message = {
+  msg_id: string;
+  createdAt: Date | null;
+  sender: string;
+  receiver: string;
+  content: string;
+  updatedAt: Date | null;
+}
