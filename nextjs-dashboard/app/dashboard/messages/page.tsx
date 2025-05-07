@@ -16,13 +16,13 @@ import {CreateMessage } from  "@/app/ui/messages/buttons";
 
 export default async function Page(props: {}) {
   const messages = await getMessages();
-
-  console.log(messages);
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
         <h1 className={`${lusitana.className} text-2xl`}>Messages</h1>
+        <CreateMessage />
       </div>
+
       <div className="mt-4 space-y-4">
         {Object.keys(messages).map((userId) => (
           <div

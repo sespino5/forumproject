@@ -2,11 +2,10 @@ import { getMessages } from "@/app/lib/data";
 import { lusitana } from "@/app/ui/fonts";
 import Link from "next/link";
 
-export default async function UserMessagesPage({
-  params,
-}: {
-  params: { userId: string };
+export default async function UserMessagesPage(props: {
+  params: Promise<{ userId: string }>;
 }) {
+  const params = await props.params;
   const { userId } = params;
 
   // Fetch all messages
