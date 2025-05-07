@@ -13,6 +13,7 @@ import { formatCurrency } from './utils';
 import { getUserID } from './actions';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+export const dynamic = "force-dynamic";
 
 export async function fetchRevenue() {
   try {
@@ -292,7 +293,7 @@ export async function fetchFilteredCustomers(query: string , currentPage: number
   }
 }
 
-export async function fetchUserById(id: string){
+export async function fetchUserById(id: string ) {
   try {
     const user = await sql<User[]>`SELECT * FROM users WHERE id=${id}`;
     return user[0];

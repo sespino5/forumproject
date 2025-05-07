@@ -5,10 +5,9 @@ import AcmeLogo from "@/app/ui/acme-logo";
 import { PowerIcon } from "@heroicons/react/24/outline";
 import { signOut } from "@/auth";
 import {UpdateUserButton} from "@/app/ui/dashboard/button";
-import {getUserID} from "@/app/lib/actions";
+
 
 export default  async function SideNav() {
-  const userId = await getUserID();
 
   return (
     <div className="flex h-full flex-col px-3 py-4 md:px-2">
