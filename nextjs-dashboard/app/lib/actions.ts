@@ -212,10 +212,8 @@ export async function createInvoice(prevState: State | undefined , formData: For
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
-  let userId = await getUserID();
-  if (!userId) {
-    userId = '00000000-0000-0000-0000-000000000000'; // Default value if userId is not found
-  }
+  const userId = await getUserID();
+  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date());
  
   // Insert data into the database
   try {
@@ -224,6 +222,11 @@ export async function createInvoice(prevState: State | undefined , formData: For
       VALUES (${customerId}, ${amountInCents}, ${status}, ${date}, ${userId})
 
     `;
+
+    await sql`
+    INSERT INTO revenue (month, revenue, user_id) 
+    VALUES (${month}, ${amountInCents}, ${userId})
+  `;
 
     
   } catch  {
@@ -266,6 +269,12 @@ export async function updateInvoice(
       SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
       WHERE id = ${id}
     `;
+
+    await sql`
+      UPDATE revenue
+      SET revenue = ${amountInCents}
+      WHERE user_id = ${await getUserID()}
+      `;
   } catch  {
     return { message: 'Database Error: Failed to Update Invoice.' };
   }

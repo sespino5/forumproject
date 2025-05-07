@@ -2,11 +2,12 @@ import { PencilIcon} from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 
-export function UpdateUserButton({ id }: { id: string }) {
+export function UpdateUserButton() {
   return (
     <Link
-      href={`/dashboard/${id}/edit`}
+      href={`/dashboard/edit`}
       className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md"
+        
     >
       <PencilIcon className="w-5" />
       <span>Edi User</span>
@@ -14,10 +15,10 @@ export function UpdateUserButton({ id }: { id: string }) {
   );
 }
 
-export function DeleteUserButton({ id }: { id: string }) {
+export function DeleteUserButton() {
   return (
     <Link
-      href={`/dashboard/${id}/delete`}
+      href={`/dashboard/delete`}
       className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md"
     >
       <span >Delete</span>

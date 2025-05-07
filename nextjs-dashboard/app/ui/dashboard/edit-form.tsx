@@ -111,7 +111,7 @@ export default function UpdateUserForm({ user }: { user: User }) {
                         Cancel
                     </Link>
 
-                    <DeleteUserButton id={user.id} />
+                    <DeleteUserButton  />
                 </div>
             </div>
         </form>
