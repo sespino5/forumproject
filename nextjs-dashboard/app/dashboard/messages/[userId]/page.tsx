@@ -2,6 +2,14 @@ import { getMessages } from "@/app/lib/data";
 import { lusitana } from "@/app/ui/fonts";
 import Link from "next/link";
 
+// Define the type for a message
+interface Message {
+  msg_id: string;
+  created_at: string;
+  content: string;
+  mesagee: string;
+}
+
 export default async function UserMessagesPage({
   params,
 }: {
@@ -14,7 +22,7 @@ export default async function UserMessagesPage({
   const messages = await getMessages();
 
   // Get messages for the specific userId
-  const userMessages = messages[userId] || [];
+  const userMessages: Message[] = messages[userId] || [];
 
   return (
     <div className="w-full">
@@ -25,7 +33,7 @@ export default async function UserMessagesPage({
       </div>
       <div className="mt-4 space-y-4">
         {userMessages.length > 0 ? (
-          userMessages.map((message: any) => (
+          userMessages.map((message: Message) => (
             <div
               key={message.msg_id}
               className="flex items-center justify-between border-b pb-2"
@@ -45,7 +53,7 @@ export default async function UserMessagesPage({
                   </button>
                 </Link>
                 <button
-                  //   onClick={() => handleDelete(message.msg_id)}
+                  // onClick={() => handleDelete(message.msg_id)}
                   className="text-red-500 hover:underline"
                 >
                   Delete

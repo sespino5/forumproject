@@ -1,20 +1,9 @@
-// get list: receiver = id, sender = id
-// add to nav bar
-// filter by which sender
-
-// id as sender name
-
-// view sent, received messages
-// form for creating message
-// form for updating message
-// delete message (deletes for both)
-
 import { lusitana } from "@/app/ui/fonts";
 import { getMessages } from "@/app/lib/data";
 import Link from "next/link";
-import {CreateMessage } from  "@/app/ui/messages/buttons";
+import { CreateMessage } from "@/app/ui/messages/buttons";
 
-export default async function Page(props: {}) {
+export default async function Page() {
   const messages = await getMessages();
   return (
     <div className="w-full">
